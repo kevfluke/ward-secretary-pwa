@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a3a5c">
+<link rel="manifest" href="manifest.json">
+<title>Ward Secretary</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0ede6;--surface:#fff;--primary:#1a3a5c;--primary-light:#2a5a8c;
+  --accent:#b8922e;--accent-soft:rgba(184,146,46,.12);
+  --text:#1c1c1c;--muted:#717880;--border:#ddd8cf;
+  --danger:#b91c1c;--danger-bg:#fef2f2;
+  --warning:#92400e;--warning-bg:#fffbeb;
+  --success:#047857;--success-bg:#ecfdf5;
+  --movein:#5b21b6;--movein-bg:#f3f0ff;
+  --radius:10px;
+  --shadow:0 1px 4px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --font:'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif;
+}
+html,body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+body{padding-bottom:68px}
+
+.header{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;padding:18px 16px 14px;position:sticky;top:0;z-index:100;text-align:center}
+.header h1{font-size:19px;font-weight:700;letter-spacing:.02em;margin-bottom:1px}
+.header p{font-size:11px;opacity:.82;text-transform:uppercase;letter-spacing:.06em;font-weight:500}
+.header .version{font-size:9px;opacity:.55;margin-top:2px}
+
+.nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:5px 0 max(8px,env(safe-area-inset-bottom));z-index:100}
+.nav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;padding:4px 10px;cursor:pointer;border-radius:8px;font-family:var(--font);transition:background .15s}
+.nav button.active{background:rgba(26,58,92,.08)}
+.nav button .icon{font-size:19px;line-height:1.2}
+.nav button .lbl{font-size:9px;color:var(--muted);margin-top:1px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;transition:color .15s}
+.nav button.active .lbl{color:var(--primary);font-weight:800}
+
+.main{padding:10px 12px 20px;max-width:600px;margin:0 auto}
+.tab{display:none}.tab.active{display:block}
+.stitle{font-size:17px;font-weight:700;color:var(--primary);margin:14px 0 10px;letter-spacing:.01em}
+.hint{font-size:12.5px;color:var(--muted);margin:0 0 14px;line-height:1.5}
+
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:11px;border:1px solid var(--border);overflow:hidden}
+.card-hd{padding:13px 15px 9px}
+.card-t{font-size:15px;font-weight:700;margin:3px 0 1px}
+.card-s{font-size:11.5px;color:var(--muted);line-height:1.4}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.07em}
+.b-today{background:#fecaca;color:var(--danger)}
+.b-tmrw{background:#fed7aa;color:var(--warning)}
+.b-later{background:#dbeafe;color:#1e40af}
+.b-mi{background:var(--movein-bg);color:var(--movein)}
+.b-due{background:#d1fae5;color:var(--success)}
+.b-wait{background:#e5e7eb;color:#6b7280}
+
+.xbtn{width:100%;background:none;border:none;border-top:1px solid var(--border);padding:9px 15px;font-size:12px;color:var(--primary-light);cursor:pointer;text-align:left;font-weight:600;font-family:var(--font)}
+.card-bd{padding:0 15px 15px;border-top:1px solid var(--border)}
+.note{font-size:12px;color:var(--muted);background:#f7f7f5;padding:8px 10px;border-radius:6px;margin:10px 0 8px;line-height:1.5;font-style:italic}
+
+.sl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 5px}
+.chip{display:inline-block;background:rgba(26,58,92,.05);border:1px solid rgba(26,58,92,.12);border-radius:6px;padding:3px 8px;font-size:11.5px;margin:2px 3px 2px 0}
+.chip-r{color:var(--muted);font-size:10px}
+
+.wb{background:var(--warning-bg);border:1px solid rgba(146,64,14,.2);border-radius:6px;padding:8px 10px;margin:8px 0}
+.wb p{font-size:11.5px;color:var(--warning)}
+
+.ta{width:100%;border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:13.5px;font-family:var(--font);line-height:1.5;resize:vertical;color:var(--text);background:#fafaf8}
+
+.btn-send{width:100%;background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;border:none;border-radius:8px;padding:12px 16px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:var(--font);letter-spacing:.02em;margin-top:8px}
+.btn-p{background:var(--primary);color:#fff;border:none;border-radius:8px;padding:10px 17px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--font)}
+.btn-s{background:var(--surface);color:var(--primary);border:1px solid var(--primary);border-radius:8px;padding:10px 17px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:var(--font);display:inline-flex;align-items:center;gap:4px}
+.btn-g{background:none;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:10px 17px;font-size:12.5px;cursor:pointer;font-family:var(--font)}
+.btn-d{background:var(--danger-bg);color:var(--danger);border:1px solid rgba(185,28,28,.2);border-radius:8px;padding:10px 17px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.btn-i{background:none;border:none;font-size:16px;cursor:pointer;padding:4px 6px;border-radius:4px}
+.btn-sm{padding:6px 12px;font-size:11.5px;border-radius:5px;font-family:var(--font);cursor:pointer;font-weight:700;border:none}
+.btn-sm-p{background:var(--primary);color:#fff}
+.btn-sm-g{background:none;color:var(--muted);border:1px solid var(--border)}
+
+.arow{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+
+.fcard{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);padding:15px;margin-bottom:12px}
+.ftitle{font-size:14.5px;font-weight:700;color:var(--primary);margin-bottom:11px}
+.inp{width:100%;border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:13.5px;font-family:var(--font);margin-bottom:7px;background:var(--surface);color:var(--text)}
+.sel{width:100%;border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:13.5px;font-family:var(--font);margin-bottom:7px;background:var(--surface);color:var(--text)}
+.inp-s{width:100%;border:1px solid var(--border);border-radius:4px;padding:7px 8px;font-size:12.5px;font-family:var(--font);margin-bottom:4px;color:var(--text)}
+.sel-s{width:100%;border:1px solid var(--border);border-radius:4px;padding:7px 8px;font-size:12.5px;font-family:var(--font);margin-bottom:4px;background:var(--surface);color:var(--text)}
+.factions{display:flex;gap:8px;margin-top:4px}
+
+.sinp{width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:13.5px;font-family:var(--font);margin-bottom:12px;background:var(--surface);color:var(--text)}
+
+.rgrp{margin-bottom:14px}
+.rgrp-l{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);padding:5px 0;border-bottom:2px solid var(--accent-soft);margin-bottom:5px}
+.crow{display:flex;justify-content:space-between;align-items:center;padding:8px 11px;background:var(--surface);border-radius:6px;margin-bottom:3px;border:1px solid var(--border)}
+.cn{font-size:13.5px;font-weight:600}
+.cp{font-size:11.5px;color:var(--muted)}
+.ca{display:flex;gap:3px}
+
+.mhdr{width:100%;background:none;border:none;padding:13px 15px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;text-align:left;font-family:var(--font)}
+.chev{font-size:13px;color:var(--muted)}
+
+.vb{padding:11px 0;border-bottom:1px solid var(--border)}.vb:last-child{border-bottom:none}
+.vl{font-weight:700;font-size:12.5px;color:var(--primary);margin-bottom:5px}
+.rl{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px}
+.rc{display:inline-block;background:var(--accent-soft);border:1px solid rgba(184,146,46,.2);border-radius:4px;padding:2px 7px;font-size:10.5px;font-weight:500}
+.vn{font-size:10.5px;color:var(--muted);margin-top:3px;font-style:italic}
+
+.tpl-area{width:100%;border:1px solid var(--border);border-radius:6px;padding:9px 11px;font-size:12.5px;font-family:var(--font);line-height:1.5;resize:vertical;color:var(--text);background:#fafaf8;min-height:80px;margin:6px 0}
+.tpl-s{margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.tpl-sl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:4px}
+
+.mi-acts{padding:0 15px 13px;display:flex;flex-direction:column;gap:6px}
+.empty{text-align:center;padding:30px 16px}
+.empty-i{font-size:34px;margin-bottom:6px}
+.empty-t{font-size:13px;color:var(--muted)}
+
+.mt{margin-top:8px}.mb{margin-bottom:8px}
+.hidden{display:none}
+
+.notif-bar{background:var(--success-bg);border:1px solid rgba(4,120,87,.2);border-radius:var(--radius);padding:12px 15px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.notif-bar p{font-size:12.5px;color:var(--success);flex:1}
+.notif-bar button{white-space:nowrap}
+
+.backup-section{margin-top:20px;padding-top:16px;border-top:2px solid var(--border)}
+.backup-section h3{font-size:14px;font-weight:700;color:var(--primary);margin-bottom:8px}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.fi{animation:fadeIn .25s ease-out}
+#toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--primary);color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;font-family:var(--font);z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Greenville 1st Ward</h1>
+  <p>Executive Secretary Tools</p>
+  <div class="version">v2.01</div>
+</div>
+
+<div class="main">
+  <div id="tab-dashboard" class="tab active"></div>
+  <div id="tab-meetings" class="tab"></div>
+  <div id="tab-contacts" class="tab"></div>
+  <div id="tab-moveins" class="tab"></div>
+  <div id="tab-settings" class="tab"></div>
+</div>
+
+<nav class="nav">
+  <button class="active" onclick="go('dashboard')"><span class="icon">📋</span><span class="lbl">Home</span></button>
+  <button onclick="go('meetings')"><span class="icon">🗓</span><span class="lbl">Meetings</span></button>
+  <button onclick="go('contacts')"><span class="icon">👥</span><span class="lbl">Contacts</span></button>
+  <button onclick="go('moveins')"><span class="icon">🏠</span><span class="lbl">Move-Ins</span></button>
+  <button onclick="go('settings')"><span class="icon">⚙️</span><span class="lbl">Settings</span></button>
+</nav>
+
+<div id="toast"></div>
+<input type="file" id="vcf-inp" accept=".vcf" style="display:none">
+<input type="file" id="restore-inp" accept=".json" style="display:none">
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+const SKEY='ward-sec-v2',B='Tymoschenko';
+function ld(){try{const r=localStorage.getItem(SKEY);return r?JSON.parse(r):dd()}catch(e){return dd()}}
+function sv(d){try{localStorage.setItem(SKEY,JSON.stringify(d))}catch(e){}}
+function dd(){return{contacts:[],moveIns:[],sent:{},tpl:{},miTpl:null,notifEnabled:false}}
+let D=ld();
+
+const ROLES=["Bishop","1st Counselor","2nd Counselor","Ward Clerk","Executive Secretary","RS President","RS 1st Counselor","RS 2nd Counselor","RS Secretary","EQ President","EQ 1st Counselor","EQ 2nd Counselor","EQ Secretary","YW President","YW 1st Counselor","YW 2nd Counselor","YW Secretary","SS President","SS 1st Counselor","SS 2nd Counselor","Primary President","Primary 1st Counselor","Primary 2nd Counselor","YM Advisor","YM Advisor Secretary","Ward T&FH Leader","Ward Mission Leader","Seminary Teacher","FT Missionary","Washington Group Leader","Assistant Secretary","Priest Quorum Adult Leader","Youth Council Member","Bishopric Counselor (Rotating)","Other"];
+
+const M=[
+  {id:"wc",n:"Ward Council",dow:0,t:"7:00 AM",loc:"Bishop's Office (3rd Sun: RS Room)",v:[
+    {l:"1st, 4th, 5th Sunday",w:[1,4,5],r:["EQ President","RS President","YW President","SS President","Primary President","YM Advisor","Bishop","1st Counselor","2nd Counselor","Ward Clerk","Executive Secretary"],nt:"Presidents or delegates from each organization",dt:"Ward Council will meet tomorrow at 7 AM. On the {weekOrd} Sunday, Bishop "+B+" has asked that the president or a representative attend from each of the following organizations:\n- Relief Society\n- Elders' Quorum\n- Young Women\n- Sunday School\n- Primary\n\nAdditionally requested:\n- Young Men Advisor\n- Bishopric\n- Ward Clerk and Executive Secretary"},
+    {l:"2nd Sunday",w:[2],r:["EQ President","EQ 1st Counselor","EQ 2nd Counselor","RS President","RS 1st Counselor","RS 2nd Counselor","YW President","SS President","Primary President","YM Advisor","Ward T&FH Leader","Ward Mission Leader","FT Missionary","Bishop","1st Counselor","2nd Counselor","Ward Clerk","Executive Secretary"],nt:"Full RS & EQ presidencies attend",dt:"Ward Council will meet tomorrow at 7 AM. On 2nd Sundays Bishop "+B+" has asked that the president OR a representative attend from each of the following organizations:\n- Young Women\n- Sunday School\n- Primary\n\nAdditionally, the following are also requested:\n- Relief Society (AND counselors)\n- Elders' Quorum (AND counselors)\n- Young Men Advisor\n- Ward T&FH Leader\n- Ward Mission Leader\n- Full Time Missionaries\n- Bishopric and Secretaries"},
+    {l:"3rd Sunday",w:[3],r:["EQ President","RS President","YW President","SS President","Primary President","YM Advisor","Seminary Teacher","Bishop","1st Counselor","2nd Counselor","Ward Clerk","Executive Secretary"],nt:"Seminary Teachers also attend. Meet in RS Room.",dt:"Ward Council will meet tomorrow at 7 AM. On 3rd Sundays Bishop "+B+" has asked that the president or a representative attend from each of the following organizations:\n- Relief Society\n- Elders' Quorum\n- Young Women\n- Sunday School\n- Primary\n\nAdditionally requested:\n- Young Men Advisor\n- Seminary Teachers\n- Bishopric\n- Ward Clerk and Executive Secretary"}
+  ]},
+  {id:"pp",n:"Priests' Presidency",dow:3,t:"6:00 PM",loc:"Bishop's Office",v:[
+    {l:"1st & 3rd Wednesday",w:[1,3],r:["Youth Council Member","YM Advisor"],nt:"Youth: Nathan Johnson, Bracken Roberts Jr, Alex Nuñez. Advisors: Austin Keeler, Terry Willets",dt:"Reminder: Priests' Presidency meeting tomorrow at 6 PM in the Bishop's Office."}
+  ]},
+  {id:"ws",n:"Work of Salvation",dow:0,t:"8:00 AM",loc:"Bishop's Office",v:[
+    {l:"2nd Sunday (regular)",w:[2],qe:false,r:["RS President","EQ President"],nt:"Presidents only in non-quarter-end months",dt:"Please remember to attend the Work of Salvation meeting on the 2nd Sunday (tomorrow!) at 8 AM."},
+    {l:"2nd Sunday (quarter end)",w:[2],qe:true,r:["RS President","RS 1st Counselor","RS 2nd Counselor","EQ President","EQ 1st Counselor","EQ 2nd Counselor"],nt:"Full RS & EQ presidencies in Mar, Jun, Sep, Dec",dt:"Bishop "+B+" has asked that the Relief Society and Elders' Quorum Presidents and counselors attend the Work of Salvation meeting on the 2nd Sunday (tomorrow!) at 8 AM."}
+  ]},
+  {id:"ywc",n:"Youth Ward Council",dow:0,t:"11:15 AM",loc:"Bishop's Office",v:[
+    {l:"4th Sunday",w:[4],r:["Youth Council Member","YW President","YW 1st Counselor","YW 2nd Counselor","YW Secretary","YM Advisor","YM Advisor Secretary","1st Counselor","2nd Counselor"],nt:"All YW age-group presidents, Aaronic quorum presidents, YW Presidency & Secretary, YM Advisor & Secretary, Bishopric Counselor (rotating)",dt:"Reminder: Youth Ward Council meets tomorrow at 11:15 AM in the Bishop's Office. All YW age-group presidents, Aaronic priesthood quorum presidents, YW Presidency & Secretary, YM Advisor & Secretary, and a Bishopric Counselor are invited."}
+  ]},
+  {id:"bm",n:"Bishopric Meeting",dow:2,t:"8:30 PM",loc:"Zoom",v:[
+    {l:"1st Tuesday",w:[1],r:["Bishop","1st Counselor","2nd Counselor","Ward Clerk","Executive Secretary","Washington Group Leader"],nt:"Washington Group Leader (Eric Hickey) attends",dt:"Reminder: Bishopric meeting tomorrow at 8:30 PM on Zoom. Washington Group Leader is invited this week."},
+    {l:"2nd & 5th Tuesday",w:[2,5],r:["Bishop","1st Counselor","2nd Counselor","Ward Clerk","Executive Secretary"],nt:"Standard bishopric + secretaries",dt:"Reminder: Bishopric meeting tomorrow at 8:30 PM on Zoom."},
+    {l:"3rd Tuesday",w:[3],r:["Bishop","1st Counselor","2nd Counselor","Ward Clerk","Executive Secretary","YM Advisor"],nt:"YM presidency joins at 9:30 PM",dt:"Reminder: Bishopric meeting tomorrow at 8:30 PM on Zoom. YM presidency, please plan to join at 9:30 PM."},
+    {l:"4th Tuesday",w:[4],r:["Bishop","1st Counselor","2nd Counselor","Ward Clerk","Executive Secretary","Assistant Secretary"],nt:"Assistant secretaries also attend",dt:"Reminder: Bishopric meeting tomorrow at 8:30 PM on Zoom. Assistant secretaries are also invited this week."}
+  ]},
+  {id:"pal",n:"Priest's Adult Leaders",dow:2,t:"9:30 PM",loc:"Zoom",v:[
+    {l:"3rd Tuesday",w:[3],r:["Bishop","1st Counselor","2nd Counselor","Priest Quorum Adult Leader"],nt:"",dt:"Reminder: Priest's Adult Leaders meeting tomorrow at 9:30 PM on Zoom."}
+  ]}
+];
+
+const DMI=[
+  "Hello, this is Kevin Fluckiger from the Greenville 1st Ward of the Church of Jesus Christ of Latter-day Saints. Your records have recently been added to our directory. Welcome! Bishop "+B+" would like to meet with you to get to know you and welcome you to our ward. Would Sunday afternoon at the church building work for you?",
+  "Hi! This is Kevin Fluckiger, Executive Secretary in the Greenville 1st Ward. We're so glad to have you in our ward family! Bishop "+B+" would love the opportunity to meet you and say hello. Could we set up a time on a Sunday afternoon that works for you?",
+  "Hello! Kevin Fluckiger here from the Greenville 1st Ward. We noticed your records joined our ward recently \u2014 welcome! Bishop "+B+" enjoys meeting new members personally. Would you be available for a brief visit on a Sunday afternoon at the church?",
+  "Hi there! This is Kevin Fluckiger from the Greenville 1st Ward. We're excited to welcome you! Bishop "+B+" would like to get to know you. Are you available some Sunday afternoon for a short visit at the church building?",
+  "Hello! Kevin Fluckiger here, Executive Secretary in the Greenville 1st Ward of the Church of Jesus Christ of Latter-day Saints. Welcome to our ward! Bishop "+B+" would love to meet with you. Would a Sunday afternoon work for a brief, friendly visit at the church?",
+  "Hi! This is Kevin Fluckiger from the Greenville 1st Ward. Just reaching out to welcome you \u2014 we're glad you're here! Bishop "+B+" likes to personally greet new members. Could we find a Sunday afternoon for a short visit?",
+  "Hello! Kevin Fluckiger with the Greenville 1st Ward here. Wanted to extend a warm welcome! Bishop "+B+" would enjoy meeting you in person. Would Sunday afternoon at the church be a good time for a brief hello?"
+];
+
+function gmiTpl(){return(D.miTpl&&D.miTpl.length)?D.miTpl:DMI}
+function wom(d){return Math.ceil(new Date(d).getDate()/7)}
+function iqe(d){return[2,5,8,11].includes(new Date(d).getMonth())}
+function fd(d){return new Date(d).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}
+function ord(n){const s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0])}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=String(s);return d.innerHTML}
+
+function gtpl(mid,vl){const k=mid+'__'+vl;if(D.tpl&&D.tpl[k])return D.tpl[k];for(const m of M)if(m.id===mid)for(const v of m.v)if(v.l===vl)return v.dt;return''}
+function stpl(mid,vl,txt){if(!D.tpl)D.tpl={};D.tpl[mid+'__'+vl]=txt;sv(D)}
+
+function smsLink(ph,body){return'sms:'+ph.join(',')+'?body='+encodeURIComponent(body)}
+function parseVCF(t){const cards=t.split('BEGIN:VCARD').filter(c=>c.trim());return cards.map(c=>{const ls=c.split(/\r?\n/);let n='',p='';for(const l of ls){if(l.startsWith('FN:')||l.startsWith('FN;'))n=l.split(':').slice(1).join(':').trim();if(!n&&l.startsWith('N:')){const pts=l.split(':').slice(1).join(':').split(';');n=[pts[1],pts[0]].filter(Boolean).join(' ').trim()}if(l.match(/^TEL[;:]/i)){const ph=l.split(':').slice(1).join(':').trim();if(ph&&!p)p=ph}}return{name:n,phone:p}}).filter(c=>c.name||c.phone)}
+
+function getUp(days){
+  const now=new Date(),res=[];
+  for(let d=0;d<=days;d++){
+    const dt=new Date(now);dt.setDate(dt.getDate()+d);
+    const dow=dt.getDay(),wk=wom(dt),qe=iqe(dt);
+    for(const m of M){if(m.dow!==dow)continue;
+      for(const v of m.v){if(!v.w.includes(wk))continue;
+        if(v.qe===true&&!qe)continue;if(v.qe===false&&qe)continue;
+        let tpl=gtpl(m.id,v.l).replace('{weekOrd}',ord(wk));
+        res.push({mid:m.id,name:m.n,vl:v.l,date:new Date(dt),time:m.t,loc:m.loc,roles:v.r,note:v.nt,tpl,du:d})
+      }
+    }
+  }
+  return res.sort((a,b)=>a.date-b.date);
+}
+
+function getMID(){
+  const now=new Date(),tpls=gmiTpl();
+  return(D.moveIns||[]).map(mi=>{
+    const k='mi-'+mi.id,last=D.sent[k]?new Date(D.sent[k]):null;
+    let due=!last||Math.floor((now-last)/864e5)>=5;
+    const idx=(mi.rc||0)%tpls.length;
+    return{...mi,due,msg:tpls[idx],rk:k}
+  }).filter(m=>m.due);
+}
+
+function resR(roles){return(D.contacts||[]).filter(c=>roles.includes(c.role))}
+
+// ── TAB SWITCHING ─────────────────────────────────────────────────────
+let CT='dashboard';
+function go(id){
+  CT=id;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  document.querySelectorAll('.nav button').forEach((b,i)=>{
+    b.classList.toggle('active',['dashboard','meetings','contacts','moveins','settings'][i]===id)
+  });
+  render();
+}
+
+function render(){
+  ({dashboard:rDash,meetings:rMeet,contacts:rCont,moveins:rMI,settings:rSet})[CT]();
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.opacity='1';setTimeout(()=>t.style.opacity='0',2200)}
+
+// ── TOGGLE ────────────────────────────────────────────────────────────
+function tog(id){
+  const el=document.getElementById(id),ar=document.getElementById(id+'-a');
+  if(el.classList.contains('hidden')){el.classList.remove('hidden');if(ar)ar.textContent='▲'}
+  else{el.classList.add('hidden');if(ar)ar.textContent='▼'}
+}
+
+// ── NOTIFICATIONS ─────────────────────────────────────────────────────
+async function enableNotif(){
+  if(!('Notification' in window)){alert('Notifications not supported in this browser.');return}
+  const perm=await Notification.requestPermission();
+  if(perm==='granted'){
+    D.notifEnabled=true;sv(D);
+    scheduleNotifs();
+    toast('Notifications enabled!');
+    render();
+  } else {
+    alert('Notification permission denied. Please enable in your browser settings.');
+  }
+}
+
+function scheduleNotifs(){
+  if(!D.notifEnabled||!('serviceWorker' in navigator))return;
+  const upcoming=getUp(2);
+  const tomorrow=upcoming.filter(m=>m.du===1);
+  if(tomorrow.length===0)return;
+
+  // Schedule for 2 PM today if meetings are tomorrow
+  const now=new Date();
+  const target=new Date(now);
+  target.setHours(14,0,0,0);
+  let delay=target-now;
+  if(delay<0) delay=0; // If past 2 PM, show immediately
+
+  if(navigator.serviceWorker.controller){
+    navigator.serviceWorker.controller.postMessage({
+      type:'SCHEDULE_NOTIFICATION',
+      title:'Ward Reminders Ready',
+      body:tomorrow.length+' meeting reminder'+(tomorrow.length>1?'s':'')+' to send for tomorrow',
+      delay:Math.max(0,delay)
+    });
+  }
+}
+
+// Register service worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(()=>{
+    if(D.notifEnabled) scheduleNotifs();
+  }).catch(e=>console.log('SW registration failed:',e));
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════════════════
+function rDash(){
+  const el=document.getElementById('tab-dashboard');
+  const up=getUp(7),mid=getMID();
+  let h='';
+
+  // Notification prompt
+  if(!D.notifEnabled && 'Notification' in window){
+    h+='<div class="notif-bar"><p>📢 Enable notifications to get automatic reminders when meetings are approaching.</p><button class="btn-sm btn-sm-p" onclick="enableNotif()">Enable</button></div>';
+  }
+
+  h+='<h2 class="stitle">Upcoming Reminders</h2>';
+
+  if(!up.length&&!mid.length) h+='<div class="empty"><p class="empty-i">✓</p><p class="empty-t">No reminders due this week!</p></div>';
+
+  up.forEach((m,i)=>{
+    const rec=resR(m.roles),ph=rec.map(r=>r.phone).filter(Boolean),miss=m.roles.filter(r=>!rec.find(c=>c.role===r));
+    const bc=m.du===0?'b-today':m.du===1?'b-tmrw':'b-later';
+    const bt=m.du===0?'TODAY':m.du===1?'TOMORROW':fd(m.date);
+    h+=`<div class="card fi"><div class="card-hd"><span class="badge ${bc}">${bt}</span><h3 class="card-t">${m.name}</h3><p class="card-s">${m.vl} · ${m.time} · ${m.loc}</p></div>
+    <button class="xbtn" onclick="tog('d${i}')"><span id="d${i}-a">▼</span> Show details & send</button>
+    <div id="d${i}" class="card-bd hidden">
+    ${m.note?'<p class="note">ℹ️ '+esc(m.note)+'</p>':''}
+    <div class="mt"><p class="sl">Recipients (${rec.length}):</p>${rec.map(r=>'<span class="chip">'+esc(r.name)+' <span class="chip-r">('+esc(r.role)+')</span></span>').join('')}</div>
+    ${miss.length?'<div class="wb"><p>⚠️ No contacts for: '+esc(miss.join(', '))+'</p></div>':''}
+    <div class="mt"><p class="sl">Message:</p><textarea class="ta" id="dm${i}" rows="6">${esc(m.tpl)}</textarea></div>
+    <button class="btn-send" onclick="dSend(${i})">📱 Open in Messages (${ph.length})</button>
+    </div></div>`;
+  });
+
+  if(mid.length){
+    h+='<h2 class="stitle" style="margin-top:20px">Move-In Follow-ups</h2>';
+    mid.forEach((mi,i)=>{
+      h+=`<div class="card fi"><div class="card-hd"><span class="badge b-mi">MOVE-IN</span><h3 class="card-t">${esc(mi.name)}</h3><p class="card-s">📱 ${esc(mi.phone)} · Added ${fd(mi.dateAdded)} · ${mi.rc||0} sent</p></div>
+      <button class="xbtn" onclick="tog('md${i}')"><span id="md${i}-a">▼</span> Show & send</button>
+      <div id="md${i}" class="card-bd hidden"><div class="mt"><p class="sl">Message:</p><textarea class="ta" id="mm${i}" rows="5">${esc(mi.msg)}</textarea></div>
+      <button class="btn-send" onclick="miSend('${mi.id}','${mi.rk}','mm${i}','${esc(mi.phone)}')">📱 Send Welcome</button></div></div>`;
+    });
+  }
+  el.innerHTML=h;
+}
+
+// Store phones for dashboard send
+function dSend(idx){
+  const up=getUp(7);
+  if(idx>=up.length)return;
+  const m=up[idx],rec=resR(m.roles),ph=rec.map(r=>r.phone).filter(Boolean);
+  if(!ph.length){alert('No phone numbers. Add contacts with phone numbers first.');return}
+  const msg=document.getElementById('dm'+idx).value;
+  window.location.href=smsLink(ph,msg);
+}
+
+function miSend(id,rk,mid,phone){
+  const msg=document.getElementById(mid).value;
+  window.location.href=smsLink([phone],msg);
+  D.sent[rk]=new Date().toISOString();
+  D.moveIns=D.moveIns.map(m=>m.id===id?{...m,rc:(m.rc||0)+1}:m);
+  sv(D);setTimeout(render,500);
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// MEETINGS
+// ══════════════════════════════════════════════════════════════════════
+function rMeet(){
+  const el=document.getElementById('tab-meetings');
+  let h='<h2 class="stitle">Meeting Schedule</h2><p class="hint">Tap any meeting to view attendees and edit reminder templates.</p>';
+
+  M.forEach((m,mi)=>{
+    h+=`<div class="card"><button class="mhdr" onclick="tog('mt${mi}')"><div><h3 class="card-t">${esc(m.n)}</h3><p class="card-s">${m.t} · ${m.loc}</p></div><span class="chev" id="mt${mi}-a">▼</span></button>
+    <div id="mt${mi}" class="card-bd hidden">${m.v.map((v,vi)=>`
+      <div class="vb"><p class="vl">${esc(v.l)}</p><div class="rl">${v.r.map(r=>'<span class="rc">'+esc(r)+'</span>').join('')}</div>
+      ${v.nt?'<p class="vn">'+esc(v.nt)+'</p>':''}
+      <div class="tpl-s"><p class="tpl-sl">Reminder Template</p><textarea class="tpl-area" id="tp-${m.id}-${vi}" rows="4">${esc(gtpl(m.id,v.l))}</textarea>
+      <div class="factions"><button class="btn-sm btn-sm-p" onclick="svTpl('${m.id}','${esc(v.l)}','tp-${m.id}-${vi}')">Save</button><button class="btn-sm btn-sm-g" onclick="rsTpl('${m.id}','${esc(v.l)}','tp-${m.id}-${vi}',${mi},${vi})">Reset</button></div></div></div>
+    `).join('')}</div></div>`;
+  });
+
+  // Move-in templates
+  const tpls=gmiTpl();
+  h+=`<h2 class="stitle" style="margin-top:20px">Move-In Welcome Templates</h2><p class="hint">These rotate every 5 days per move-in.</p><div class="card"><div class="card-bd" style="border-top:none;padding-top:14px">`;
+  tpls.forEach((t,i)=>{
+    h+=`<div class="tpl-s" ${i===0?'style="border-top:none;padding-top:0"':''}><p class="tpl-sl">Variant ${i+1}</p><textarea class="tpl-area" id="mit${i}" rows="3">${esc(t)}</textarea></div>`;
+  });
+  h+=`<div class="factions mt"><button class="btn-sm btn-sm-p" onclick="svMIT()">Save All</button><button class="btn-sm btn-sm-g" onclick="rsMIT()">Reset</button></div></div></div>`;
+
+  el.innerHTML=h;
+}
+
+function svTpl(mid,vl,tid){stpl(mid,vl,document.getElementById(tid).value);toast('Template saved!')}
+function rsTpl(mid,vl,tid,mi,vi){const k=mid+'__'+vl;if(D.tpl)delete D.tpl[k];sv(D);document.getElementById(tid).value=M[mi].v[vi].dt;toast('Reset to default.')}
+function svMIT(){const t=[];gmiTpl().forEach((_,i)=>{const el=document.getElementById('mit'+i);if(el)t.push(el.value)});D.miTpl=t;sv(D);toast('Saved!')}
+function rsMIT(){delete D.miTpl;sv(D);rMeet();toast('Reset to defaults.')}
+
+// ══════════════════════════════════════════════════════════════════════
+// CONTACTS
+// ══════════════════════════════════════════════════════════════════════
+let cSrch='',showAF=false,editId=null;
+
+function rCont(){
+  const el=document.getElementById('tab-contacts');
+  const cs=(D.contacts||[]).filter(c=>c.name.toLowerCase().includes(cSrch.toLowerCase())||c.role.toLowerCase().includes(cSrch.toLowerCase())).sort((a,b)=>a.role.localeCompare(b.role)||a.name.localeCompare(b.name));
+  const grp={};cs.forEach(c=>{if(!grp[c.role])grp[c.role]=[];grp[c.role].push(c)});
+
+  let h='<h2 class="stitle">Contacts Directory</h2>';
+  h+=`<div class="arow"><button class="btn-p" onclick="showAF=true;render()">+ Add Contact</button><button class="btn-s" onclick="document.getElementById('vcf-inp').click()">📁 Import VCF</button></div>`;
+  h+=`<input class="sinp" type="text" placeholder="Search by name or role..." value="${esc(cSrch)}" oninput="cSrch=this.value;rCont()">`;
+
+  if(showAF){
+    h+=`<div class="fcard fi"><h3 class="ftitle">New Contact</h3><input class="inp" id="an" placeholder="Full Name"><input class="inp" id="ap" placeholder="Phone Number" type="tel"><select class="sel" id="ar">${ROLES.map(r=>'<option value="'+esc(r)+'">'+esc(r)+'</option>').join('')}</select><div class="factions"><button class="btn-p" onclick="addC()">Save</button><button class="btn-g" onclick="showAF=false;render()">Cancel</button></div></div>`;
+  }
+
+  if(!Object.keys(grp).length) h+='<div class="empty"><p class="empty-i">👥</p><p class="empty-t">No contacts yet. Add or import VCF to start.</p></div>';
+
+  Object.entries(grp).forEach(([role,mems])=>{
+    h+=`<div class="rgrp"><p class="rgrp-l">${esc(role)} (${mems.length})</p>`;
+    mems.forEach(c=>{
+      if(editId===c.id){
+        h+=`<div class="crow" style="flex-direction:column;align-items:stretch"><input class="inp-s" id="en${c.id}" value="${esc(c.name)}"><input class="inp-s" id="ep${c.id}" value="${esc(c.phone)}" type="tel"><select class="sel-s" id="er${c.id}">${ROLES.map(r=>'<option value="'+esc(r)+'"'+(r===c.role?' selected':'')+'>'+esc(r)+'</option>').join('')}</select><div style="display:flex;gap:6px;margin-top:4px"><button class="btn-sm btn-sm-p" onclick="svC('${c.id}')">Save</button><button class="btn-sm btn-sm-g" onclick="editId=null;render()">Cancel</button></div></div>`;
+      } else {
+        h+=`<div class="crow"><div><p class="cn">${esc(c.name)}</p><p class="cp">${esc(c.phone||'No phone')}</p></div><div class="ca"><button class="btn-i" onclick="editId='${c.id}';render()">✏️</button><button class="btn-i" onclick="delC('${c.id}')">🗑</button></div></div>`;
+      }
+    });
+    h+='</div>';
+  });
+  el.innerHTML=h;
+}
+
+function addC(){const n=document.getElementById('an').value.trim(),p=document.getElementById('ap').value.trim(),r=document.getElementById('ar').value;if(!n){alert('Enter a name.');return}D.contacts.push({id:uid(),name:n,phone:p,role:r});sv(D);showAF=false;render()}
+function svC(id){const n=document.getElementById('en'+id).value.trim(),p=document.getElementById('ep'+id).value.trim(),r=document.getElementById('er'+id).value;D.contacts=D.contacts.map(c=>c.id===id?{...c,name:n,phone:p,role:r}:c);sv(D);editId=null;render()}
+function delC(id){if(confirm('Remove this contact?')){D.contacts=D.contacts.filter(c=>c.id!==id);sv(D);render()}}
+
+document.getElementById('vcf-inp').addEventListener('change',function(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=function(ev){
+    const parsed=parseVCF(ev.target.result);
+    if(!parsed.length){alert('No contacts found.');return}
+    parsed.forEach(p=>D.contacts.push({id:uid(),name:p.name,phone:p.phone,role:'Other'}));
+    sv(D);alert('Imported '+parsed.length+' contact(s). Assign roles to each.');render();
+  };r.readAsText(f);e.target.value='';
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// MOVE-INS
+// ══════════════════════════════════════════════════════════════════════
+let showMIF=false;
+
+function rMI(){
+  const el=document.getElementById('tab-moveins');
+  const mis=D.moveIns||[],due=getMID();
+  let h='<h2 class="stitle">New Move-Ins</h2><p class="hint">Welcome messages rotate every 5 days until removed.</p>';
+  h+='<button class="btn-p mb" onclick="showMIF=true;render()">+ Add Move-In</button>';
+
+  if(showMIF){
+    h+=`<div class="fcard fi"><h3 class="ftitle">New Move-In</h3><input class="inp" id="min" placeholder="Full Name"><input class="inp" id="mip" placeholder="Phone Number" type="tel"><div class="factions"><button class="btn-p" onclick="addMI()">Add</button><button class="btn-g" onclick="showMIF=false;render()">Cancel</button></div></div>`;
+  }
+
+  if(!mis.length) h+='<div class="empty"><p class="empty-i">🏠</p><p class="empty-t">No move-ins tracked.</p></div>';
+
+  mis.forEach((mi,i)=>{
+    const d=due.find(x=>x.id===mi.id);
+    h+=`<div class="card fi"><div class="card-hd">${d?'<span class="badge b-due">REMINDER DUE</span>':'<span class="badge b-wait">WAITING</span>'}
+    <h3 class="card-t">${esc(mi.name)}</h3><p class="card-s">📱 ${esc(mi.phone)} · Added ${fd(mi.dateAdded)} · ${mi.rc||0} sent</p></div>
+    <div class="mi-acts">${d?`<textarea class="ta" id="mlm${i}" rows="4">${esc(d.msg)}</textarea><button class="btn-send" onclick="miSend('${mi.id}','${d.rk}','mlm${i}','${esc(mi.phone)}')">📱 Send Welcome</button>`:''}
+    <button class="btn-d" onclick="rmMI('${mi.id}')">Remove from list</button></div></div>`;
+  });
+  el.innerHTML=h;
+}
+
+function addMI(){const n=document.getElementById('min').value.trim(),p=document.getElementById('mip').value.trim();if(!n||!p){alert('Enter name and phone.');return}D.moveIns.push({id:uid(),name:n,phone:p,dateAdded:new Date().toISOString(),rc:0});sv(D);showMIF=false;render()}
+function rmMI(id){if(confirm('Remove from move-in list?')){D.moveIns=D.moveIns.filter(m=>m.id!==id);sv(D);render()}}
+
+// ══════════════════════════════════════════════════════════════════════
+// SETTINGS (BACKUP / RESTORE)
+// ══════════════════════════════════════════════════════════════════════
+function rSet(){
+  const el=document.getElementById('tab-settings');
+  const stats={
+    contacts:(D.contacts||[]).length,
+    moveIns:(D.moveIns||[]).length,
+    templates:Object.keys(D.tpl||{}).length
+  };
+
+  let h='<h2 class="stitle">Settings</h2>';
+
+  // Stats
+  h+=`<div class="card"><div class="card-bd" style="border-top:none;padding-top:14px">
+    <p class="sl">Data Summary</p>
+    <p style="font-size:13px;margin:6px 0">📇 <strong>${stats.contacts}</strong> contacts · 🏠 <strong>${stats.moveIns}</strong> move-ins · 📝 <strong>${stats.templates}</strong> custom templates</p>
+  </div></div>`;
+
+  // Notifications
+  h+=`<div class="card"><div class="card-bd" style="border-top:none;padding-top:14px">
+    <p class="sl">Notifications</p>
+    <p style="font-size:13px;margin:6px 0">${D.notifEnabled?'✅ Notifications enabled':'❌ Notifications disabled'}</p>
+    ${!D.notifEnabled?'<button class="btn-p mt" onclick="enableNotif()">Enable Notifications</button>':'<button class="btn-g mt" onclick="D.notifEnabled=false;sv(D);render()">Disable Notifications</button>'}
+  </div></div>`;
+
+  // Backup & Restore
+  h+=`<div class="card"><div class="card-bd" style="border-top:none;padding-top:14px">
+    <p class="sl">Backup & Restore</p>
+    <p class="hint" style="margin-top:6px">Back up your data to a JSON file. Restore it if you ever need to reinstall or switch devices.</p>
+    <div class="arow">
+      <button class="btn-p" onclick="doBackup()">💾 Download Backup</button>
+      <button class="btn-s" onclick="document.getElementById('restore-inp').click()">📂 Restore from File</button>
+    </div>
+  </div></div>`;
+
+  // Danger zone
+  h+=`<div class="card" style="border-color:rgba(185,28,28,.2)"><div class="card-bd" style="border-top:none;padding-top:14px">
+    <p class="sl" style="color:var(--danger)">Danger Zone</p>
+    <button class="btn-d mt" onclick="resetAll()">🗑 Reset All Data</button>
+  </div></div>`;
+
+  el.innerHTML=h;
+}
+
+function doBackup(){
+  const blob=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='ward-secretary-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Backup downloaded!');
+}
+
+document.getElementById('restore-inp').addEventListener('change',function(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=function(ev){
+    try{
+      const restored=JSON.parse(ev.target.result);
+      if(!restored.contacts){alert('Invalid backup file.');return}
+      if(!confirm('This will replace all current data with the backup. Continue?'))return;
+      D=restored;sv(D);
+      toast('Data restored successfully!');render();
+    }catch(err){alert('Error reading backup file: '+err.message)}
+  };r.readAsText(f);e.target.value='';
+});
+
+function resetAll(){
+  if(!confirm('This will DELETE all contacts, move-ins, templates, and settings. Are you sure?'))return;
+  if(!confirm('Really sure? This cannot be undone.'))return;
+  D=dd();sv(D);toast('All data reset.');render();
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════════
+render();
+</script>
+</body>
+</html>
