@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ward-sec-v2.01';
+const CACHE_NAME = 'ward-sec-v2.02';
 const ASSETS = [
   './',
   './index.html',
